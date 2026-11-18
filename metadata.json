@@ -1,0 +1,6 @@
+{
+  "name": "Entelektüel Akademi",
+  "description": "12 Ayda Sekiz Disiplinde Derinlemesine Öğrenme: Kişisel Müfredat, Yapay Zekâ Öğretmeni, Akıllı Tekrar ve Sınav Platformu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

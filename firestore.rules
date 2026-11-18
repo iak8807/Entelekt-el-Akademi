@@ -1,0 +1,324 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.programStartEpochDay is int && data.programStartEpochDay >= 18000 && data.programStartEpochDay <= 100000 &&
+        data.weeklyTargetHours is int && data.weeklyTargetHours >= 1 && data.weeklyTargetHours <= 60 &&
+        data.dailyMinutesTarget is int && data.dailyMinutesTarget >= 15 && data.dailyMinutesTarget <= 180 &&
+        data.busyDayMode is bool &&
+        data.availableDays is list && data.availableDays.size() >= 1 && data.availableDays.size() <= 7 && data.availableDays[0] is int &&
+        data.notifDailyLesson is bool &&
+        data.notifSpacedRepetition is bool &&
+        data.notifWeeklyReview is bool &&
+        data.notifMonthlyExam is bool &&
+        data.notifGoalCompleted is bool &&
+        data.totalStudyMinutes is int && data.totalStudyMinutes >= 0 && data.totalStudyMinutes <= 1000000 &&
+        data.currentStreakDays is int && data.currentStreakDays >= 0 && data.currentStreakDays <= 10000 &&
+        data.longestStreakDays is int && data.longestStreakDays >= 0 && data.longestStreakDays <= 10000 &&
+        data.lastStudyEpochDay is int && data.lastStudyEpochDay >= 0 && data.lastStudyEpochDay <= 100000 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidLessonProgress(data, userId) {
+      return data.userId == userId &&
+        data.lessonId is string && data.lessonId.size() >= 1 && data.lessonId.size() <= 64 &&
+        data.monthNumber is int && data.monthNumber >= 1 && data.monthNumber <= 12 &&
+        data.disciplineId is string && data.disciplineId.size() >= 1 && data.disciplineId.size() <= 40 &&
+        data.completed is bool &&
+        data.favorite is bool &&
+        data.readLater is bool &&
+        data.learnedSummary is string && data.learnedSummary.size() <= 4000 &&
+        data.studyMinutes is int && data.studyMinutes >= 0 && data.studyMinutes <= 10000 &&
+        data.masteryScore is int && data.masteryScore >= 0 && data.masteryScore <= 100 &&
+        data.completedTasks is list && data.completedTasks.size() <= 10 &&
+        (data.completedTasks.size() == 0 || data.completedTasks[0] is string) &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidExamResult(data, userId) {
+      return data.userId == userId &&
+        data.lessonId is string && data.lessonId.size() >= 1 && data.lessonId.size() <= 64 &&
+        data.examTitle is string && data.examTitle.size() >= 1 && data.examTitle.size() <= 200 &&
+        data.disciplineId is string && data.disciplineId.size() >= 1 && data.disciplineId.size() <= 40 &&
+        data.monthNumber is int && data.monthNumber >= 1 && data.monthNumber <= 12 &&
+        data.totalScore is int && data.totalScore >= 0 && data.totalScore <= 100 &&
+        data.correctCount is int && data.correctCount >= 0 && data.correctCount <= 100 &&
+        data.wrongCount is int && data.wrongCount >= 0 && data.wrongCount <= 100 &&
+        data.knowledgeScore is int && data.knowledgeScore >= 0 && data.knowledgeScore <= 100 &&
+        data.understandingScore is int && data.understandingScore >= 0 && data.understandingScore <= 100 &&
+        data.applicationScore is int && data.applicationScore >= 0 && data.applicationScore <= 100 &&
+        data.analysisScore is int && data.analysisScore >= 0 && data.analysisScore <= 100 &&
+        data.aiEvaluationScore is int && data.aiEvaluationScore >= 0 && data.aiEvaluationScore <= 100 &&
+        data.aiEvaluationRationale is string && data.aiEvaluationRationale.size() <= 5000 &&
+        data.weakAreas is list && data.weakAreas.size() <= 10 &&
+        (data.weakAreas.size() == 0 || data.weakAreas[0] is string) &&
+        data.reviewConcepts is list && data.reviewConcepts.size() <= 15 &&
+        (data.reviewConcepts.size() == 0 || data.reviewConcepts[0] is string) &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidSpacedCard(data, userId) {
+      return data.userId == userId &&
+        data.conceptTitle is string && data.conceptTitle.size() >= 1 && data.conceptTitle.size() <= 200 &&
+        data.conceptSummary is string && data.conceptSummary.size() >= 1 && data.conceptSummary.size() <= 2000 &&
+        data.disciplineId is string && data.disciplineId.size() >= 1 && data.disciplineId.size() <= 40 &&
+        data.lessonId is string && data.lessonId.size() >= 1 && data.lessonId.size() <= 64 &&
+        data.intervalDays is int && data.intervalDays >= 0 && data.intervalDays <= 365 &&
+        data.nextReviewEpochDay is int && data.nextReviewEpochDay >= 18000 && data.nextReviewEpochDay <= 100000 &&
+        data.reviewCount is int && data.reviewCount >= 0 && data.reviewCount <= 10000 &&
+        data.lastRecallLevel is string && data.lastRecallLevel in ['NEW', 'NONE', 'HARD', 'PARTIAL', 'EASY'] &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidStudyNote(data, userId) {
+      return data.userId == userId &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.content is string && data.content.size() >= 1 && data.content.size() <= 10000 &&
+        data.quoteText is string && data.quoteText.size() <= 2000 &&
+        data.personalReflection is string && data.personalReflection.size() <= 4000 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+        data.disciplineId is string && data.disciplineId.size() >= 1 && data.disciplineId.size() <= 40 &&
+        data.lessonId is string && data.lessonId.size() <= 64 &&
+        data.tags is list && data.tags.size() <= 10 &&
+        (data.tags.size() == 0 || data.tags[0] is string) &&
+        data.favorite is bool &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidStudyLog(data, userId) {
+      return data.userId == userId &&
+        data.epochDay is int && data.epochDay >= 18000 && data.epochDay <= 100000 &&
+        data.minutesStudied is int && data.minutesStudied >= 0 && data.minutesStudied <= 1440 &&
+        data.lessonsTouched is int && data.lessonsTouched >= 0 && data.lessonsTouched <= 100 &&
+        data.reviewsCompleted is int && data.reviewsCompleted >= 0 && data.reviewsCompleted <= 500 &&
+        isValidTimestamp(data.createdAt) &&
+        isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+        isValidId(userId) &&
+        incoming().keys().hasAll([
+          'userId', 'displayName', 'programStartEpochDay', 'weeklyTargetHours',
+          'dailyMinutesTarget', 'busyDayMode', 'availableDays',
+          'notifDailyLesson', 'notifSpacedRepetition', 'notifWeeklyReview',
+          'notifMonthlyExam', 'notifGoalCompleted', 'totalStudyMinutes',
+          'currentStreakDays', 'longestStreakDays', 'lastStudyEpochDay',
+          'createdAt', 'updatedAt'
+        ]) &&
+        incoming().keys().hasOnly([
+          'userId', 'displayName', 'programStartEpochDay', 'weeklyTargetHours',
+          'dailyMinutesTarget', 'busyDayMode', 'availableDays',
+          'notifDailyLesson', 'notifSpacedRepetition', 'notifWeeklyReview',
+          'notifMonthlyExam', 'notifGoalCompleted', 'totalStudyMinutes',
+          'currentStreakDays', 'longestStreakDays', 'lastStudyEpochDay',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'programStartEpochDay', 'weeklyTargetHours',
+          'dailyMinutesTarget', 'busyDayMode', 'availableDays',
+          'notifDailyLesson', 'notifSpacedRepetition', 'notifWeeklyReview',
+          'notifMonthlyExam', 'notifGoalCompleted', 'totalStudyMinutes',
+          'currentStreakDays', 'longestStreakDays', 'lastStudyEpochDay',
+          'updatedAt'
+        ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /lessonProgress/{lessonId} {
+        allow get: if isOwner(userId) && isValidId(lessonId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(lessonId) &&
+          incoming().keys().hasAll([
+            'userId', 'lessonId', 'monthNumber', 'disciplineId', 'completed',
+            'favorite', 'readLater', 'learnedSummary', 'studyMinutes',
+            'masteryScore', 'completedTasks', 'createdAt', 'updatedAt'
+          ]) &&
+          incoming().keys().hasOnly([
+            'userId', 'lessonId', 'monthNumber', 'disciplineId', 'completed',
+            'favorite', 'readLater', 'learnedSummary', 'studyMinutes',
+            'masteryScore', 'completedTasks', 'createdAt', 'updatedAt'
+          ]) &&
+          isValidLessonProgress(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(lessonId) &&
+          isValidLessonProgress(incoming(), userId) &&
+          incoming().userId == existing().userId &&
+          incoming().lessonId == existing().lessonId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'completed', 'favorite', 'readLater', 'learnedSummary',
+            'studyMinutes', 'masteryScore', 'completedTasks', 'updatedAt'
+          ]);
+
+        allow delete: if isOwner(userId) && isValidId(lessonId);
+      }
+
+      match /examResults/{resultId} {
+        allow get: if isOwner(userId) && isValidId(resultId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(resultId) &&
+          incoming().keys().hasAll([
+            'userId', 'lessonId', 'examTitle', 'disciplineId', 'monthNumber',
+            'totalScore', 'correctCount', 'wrongCount', 'knowledgeScore',
+            'understandingScore', 'applicationScore', 'analysisScore',
+            'aiEvaluationScore', 'aiEvaluationRationale', 'weakAreas',
+            'reviewConcepts', 'createdAt', 'updatedAt'
+          ]) &&
+          incoming().keys().hasOnly([
+            'userId', 'lessonId', 'examTitle', 'disciplineId', 'monthNumber',
+            'totalScore', 'correctCount', 'wrongCount', 'knowledgeScore',
+            'understandingScore', 'applicationScore', 'analysisScore',
+            'aiEvaluationScore', 'aiEvaluationRationale', 'weakAreas',
+            'reviewConcepts', 'createdAt', 'updatedAt'
+          ]) &&
+          isValidExamResult(incoming(), userId);
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(resultId);
+      }
+
+      match /spacedCards/{cardId} {
+        allow get: if isOwner(userId) && isValidId(cardId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(cardId) &&
+          incoming().keys().hasAll([
+            'userId', 'conceptTitle', 'conceptSummary', 'disciplineId', 'lessonId',
+            'intervalDays', 'nextReviewEpochDay', 'reviewCount', 'lastRecallLevel',
+            'createdAt', 'updatedAt'
+          ]) &&
+          incoming().keys().hasOnly([
+            'userId', 'conceptTitle', 'conceptSummary', 'disciplineId', 'lessonId',
+            'intervalDays', 'nextReviewEpochDay', 'reviewCount', 'lastRecallLevel',
+            'createdAt', 'updatedAt'
+          ]) &&
+          isValidSpacedCard(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(cardId) &&
+          isValidSpacedCard(incoming(), userId) &&
+          incoming().userId == existing().userId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'intervalDays', 'nextReviewEpochDay', 'reviewCount',
+            'lastRecallLevel', 'updatedAt'
+          ]);
+
+        allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+
+      match /notes/{noteId} {
+        allow get: if isOwner(userId) && isValidId(noteId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(noteId) &&
+          incoming().keys().hasAll([
+            'userId', 'title', 'content', 'quoteText', 'personalReflection',
+            'category', 'disciplineId', 'lessonId', 'tags', 'favorite',
+            'createdAt', 'updatedAt'
+          ]) &&
+          incoming().keys().hasOnly([
+            'userId', 'title', 'content', 'quoteText', 'personalReflection',
+            'category', 'disciplineId', 'lessonId', 'tags', 'favorite',
+            'createdAt', 'updatedAt'
+          ]) &&
+          isValidStudyNote(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(noteId) &&
+          isValidStudyNote(incoming(), userId) &&
+          incoming().userId == existing().userId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'content', 'quoteText', 'personalReflection',
+            'category', 'disciplineId', 'lessonId', 'tags', 'favorite', 'updatedAt'
+          ]);
+
+        allow delete: if isOwner(userId) && isValidId(noteId);
+      }
+
+      match /studyLogs/{logId} {
+        allow get: if isOwner(userId) && isValidId(logId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+          isValidId(logId) &&
+          incoming().keys().hasAll([
+            'userId', 'epochDay', 'minutesStudied', 'lessonsTouched',
+            'reviewsCompleted', 'createdAt', 'updatedAt'
+          ]) &&
+          incoming().keys().hasOnly([
+            'userId', 'epochDay', 'minutesStudied', 'lessonsTouched',
+            'reviewsCompleted', 'createdAt', 'updatedAt'
+          ]) &&
+          isValidStudyLog(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(logId) &&
+          isValidStudyLog(incoming(), userId) &&
+          incoming().userId == existing().userId &&
+          incoming().epochDay == existing().epochDay &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'minutesStudied', 'lessonsTouched', 'reviewsCompleted', 'updatedAt'
+          ]);
+
+        allow delete: if isOwner(userId) && isValidId(logId);
+      }
+    }
+  }
+}

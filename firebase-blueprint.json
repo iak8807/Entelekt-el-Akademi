@@ -1,0 +1,185 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User learning profile, study schedule preferences, notification toggles, and cumulative metrics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Authenticated user UID." },
+        "displayName": { "type": "string", "description": "User display name." },
+        "programStartEpochDay": { "type": "integer", "description": "Start date as epoch day in Europe/Istanbul." },
+        "weeklyTargetHours": { "type": "integer", "description": "Weekly study target in hours." },
+        "dailyMinutesTarget": { "type": "integer", "description": "Daily target in minutes (15, 30, 45, 60, 90)." },
+        "busyDayMode": { "type": "boolean", "description": "Whether 15-minute busy day mode is enabled." },
+        "availableDays": { "type": "array", "description": "ISO days of week (1..7) available for study." },
+        "notifDailyLesson": { "type": "boolean" },
+        "notifSpacedRepetition": { "type": "boolean" },
+        "notifWeeklyReview": { "type": "boolean" },
+        "notifMonthlyExam": { "type": "boolean" },
+        "notifGoalCompleted": { "type": "boolean" },
+        "totalStudyMinutes": { "type": "integer" },
+        "currentStreakDays": { "type": "integer" },
+        "longestStreakDays": { "type": "integer" },
+        "lastStudyEpochDay": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update." }
+      },
+      "required": [
+        "userId", "displayName", "programStartEpochDay", "weeklyTargetHours",
+        "dailyMinutesTarget", "busyDayMode", "availableDays",
+        "notifDailyLesson", "notifSpacedRepetition", "notifWeeklyReview",
+        "notifMonthlyExam", "notifGoalCompleted", "totalStudyMinutes",
+        "currentStreakDays", "longestStreakDays", "lastStudyEpochDay",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "LessonProgress": {
+      "title": "LessonProgress",
+      "description": "Per-lesson completion, mastery score, bookmarks, and personal reflection.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "monthNumber": { "type": "integer" },
+        "disciplineId": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "favorite": { "type": "boolean" },
+        "readLater": { "type": "boolean" },
+        "learnedSummary": { "type": "string" },
+        "studyMinutes": { "type": "integer" },
+        "masteryScore": { "type": "integer" },
+        "completedTasks": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "lessonId", "monthNumber", "disciplineId", "completed",
+        "favorite", "readLater", "learnedSummary", "studyMinutes",
+        "masteryScore", "completedTasks", "createdAt", "updatedAt"
+      ]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "Exam attempt scores across 4 independent competencies and AI open-ended evaluation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "examTitle": { "type": "string" },
+        "disciplineId": { "type": "string" },
+        "monthNumber": { "type": "integer" },
+        "totalScore": { "type": "integer" },
+        "correctCount": { "type": "integer" },
+        "wrongCount": { "type": "integer" },
+        "knowledgeScore": { "type": "integer" },
+        "understandingScore": { "type": "integer" },
+        "applicationScore": { "type": "integer" },
+        "analysisScore": { "type": "integer" },
+        "aiEvaluationScore": { "type": "integer" },
+        "aiEvaluationRationale": { "type": "string" },
+        "weakAreas": { "type": "array" },
+        "reviewConcepts": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "lessonId", "examTitle", "disciplineId", "monthNumber",
+        "totalScore", "correctCount", "wrongCount", "knowledgeScore",
+        "understandingScore", "applicationScore", "analysisScore",
+        "aiEvaluationScore", "aiEvaluationRationale", "weakAreas",
+        "reviewConcepts", "createdAt", "updatedAt"
+      ]
+    },
+    "SpacedCard": {
+      "title": "SpacedCard",
+      "description": "Spaced repetition concept card with dynamic review interval.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "conceptTitle": { "type": "string" },
+        "conceptSummary": { "type": "string" },
+        "disciplineId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "intervalDays": { "type": "integer" },
+        "nextReviewEpochDay": { "type": "integer" },
+        "reviewCount": { "type": "integer" },
+        "lastRecallLevel": { "type": "string", "enum": ["NEW", "NONE", "HARD", "PARTIAL", "EASY"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "conceptTitle", "conceptSummary", "disciplineId", "lessonId",
+        "intervalDays", "nextReviewEpochDay", "reviewCount", "lastRecallLevel",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "StudyNote": {
+      "title": "StudyNote",
+      "description": "Personal study notes, quotes, tags, and independent philosophical/academic reflections.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "quoteText": { "type": "string" },
+        "personalReflection": { "type": "string" },
+        "category": { "type": "string" },
+        "disciplineId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "tags": { "type": "array" },
+        "favorite": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "title", "content", "quoteText", "personalReflection",
+        "category", "disciplineId", "lessonId", "tags", "favorite",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "StudyLog": {
+      "title": "StudyLog",
+      "description": "Daily study session log for analytics charts and consistency tracking.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "epochDay": { "type": "integer" },
+        "minutesStudied": { "type": "integer" },
+        "lessonsTouched": { "type": "integer" },
+        "reviewsCompleted": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "epochDay", "minutesStudied", "lessonsTouched",
+        "reviewsCompleted", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile, planner settings, and notification preferences."
+    },
+    "/users/{userId}/lessonProgress/{lessonId}": {
+      "schema": { "$ref": "#/entities/LessonProgress" },
+      "description": "User progress and reflections for each curriculum lesson."
+    },
+    "/users/{userId}/examResults/{resultId}": {
+      "schema": { "$ref": "#/entities/ExamResult" },
+      "description": "User quiz and AI-evaluated exam results."
+    },
+    "/users/{userId}/spacedCards/{cardId}": {
+      "schema": { "$ref": "#/entities/SpacedCard" },
+      "description": "Spaced repetition review cards."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/StudyNote" },
+      "description": "Personal knowledge bank notes and Kendi Düşüncelerim reflections."
+    },
+    "/users/{userId}/studyLogs/{logId}": {
+      "schema": { "$ref": "#/entities/StudyLog" },
+      "description": "Daily study logs for learning analytics."
+    }
+  }
+}
